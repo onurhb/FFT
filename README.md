@@ -79,4 +79,4 @@ Time: 0.008000
 ```
 
 
-![Butterfly diagram](https://github.com/onurmhb/FFT/blob/master/butterfly.png "Butterfly")
+![Butterfly diagram](https://github.com/onurhb/FFT/blob/master/butterfly.png "Butterfly")
