@@ -1,52 +1,51 @@
-#include <iostream>
 #include <complex>
-#include <vector>
 #include "FFT.h"
 #include <ctime>
-#include <cstdio>
+#include <iostream>
+#include <kiss_fft.h>
 
 
-// -printf("%f\n", std::abs(freqbins[j] * 2.0) * 1.0 / N);
+
 int main() {
 
-    // - 1Hz, amp = 1
+    clock_t begin, end;
+    double elapsed_secs;
+    using namespace Algorithm;
+
     int N = 8;
-    int sampleRate = 8; // - Samples each sec, needed when we are going to print out spectrum
-    double rawSamples[N] = {0.0, 0.707, 1.0, 0.707, 0.0, -0.707, -1.0, -0.707};
+    std::vector<std::complex<float>> spectrum;
 
-    /*
-    // - 1Hz, amp = 1
-    unsigned int N = 4;
-    double rawSamples[N] = {0.0, 1.0, 0.0, -1.0};
-    */
+    int sampleSize = 2048;
+    int rounds = 10000000;
+    std::cout << "running " << sampleSize << " samples" << std::endl;
 
-    std::complex<double>* samples = new std::complex<double>[N];
-
-    for (int i = 0; i < N; ++i) {
-        samples[i] = rawSamples[i];
-    }
-
-    Algorithm::FFT fft(N, Algorithm::NO_WINDOW);
-
-    clock_t begin = clock();
-    std::complex<double>* frequencyBins = fft.forwardFFT(samples);
-
-    // - Printing out frequency bins!
-    for (int i = 0; i < N; ++i) {
-        std::cout <<  abs(frequencyBins[i]) * 2 / N << std::endl;
-    }
-
-    printf("------\n");
-
-    // - Getting the samples back from the frequency bins!
-    samples = fft.inverseFFT(frequencyBins);
-    for (int i = 0; i < N; ++i) {
-        std::cout <<  samples[i].real() << std::endl;
+    for (int j = 0; j < sampleSize; ++j) {
+        spectrum.push_back(10.0f);
     }
 
 
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    printf("Time: %f", elapsed_secs);
+    Algorithm::FFT fft(N);
+    std::vector<std::complex<float>> frequencyBins;
+    begin = clock();
+    for (int i = 0; i < rounds; ++i) {
+        frequencyBins = fft.forwardFFT(spectrum);
+    }
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    printf("Time FFT: %f\n", elapsed_secs);
+
+
+
+    kiss_fft_cfg fwd = kiss_fft_alloc(N,0,NULL,NULL);
+    begin = clock();
+    for (int k = 0; k < rounds; ++k) {
+        kiss_fft(fwd,(kiss_fft_cpx*) &spectrum[0],(kiss_fft_cpx*) &frequencyBins[0]);
+    }
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    printf("Time KissFFT: %f\n", elapsed_secs);
+
+
+    kiss_fft_free(fwd);
     return 0;
 }
